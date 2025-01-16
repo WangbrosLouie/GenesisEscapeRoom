@@ -95,9 +95,9 @@ scw = $C000 ;Window
 sch = $C800 ;H Scroll
 sat = $CC00 ;Sprite Attrib. Table
 pstart
-	move.l $A10001,d0
-	andi.b #$0F,d0
-	beq VDP
+	;move.l $A10001,d0
+	;andi.b #$0F,d0
+	;beq VDP
 	move.l	#'SEGA',$A14000
 VDP
 	lea VDPStuff,a1
