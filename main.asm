@@ -1,19 +1,19 @@
 	dc.l $FFFFFE ;$00 SP Initial Value
 	dc.l pstart ;$04 PC Initial Value
-	dc.l return ;$08 Access Fault
-	dc.l return ;$0C Address Error
-	dc.l return ;$10 Illegal Instruction
-	dc.l return ;$14 Integer Div by 0
-	dc.l return ;$18 CHK, CHK2 Instruction
-	dc.l return ;$1C FTRAP, TRAP, TRAPV Instructions
-	dc.l return ;$20 Priveledge Violation
-	dc.l return ;$24 Trace
-	dc.l return ;$28 Line 1010($A) Emulator
-	dc.l return ;$2C Line 1111($F) Emulator
+	dc.l afault ;$08 Access Fault
+	dc.l aerror ;$0C Address Error
+	dc.l illins ;$10 Illegal Instruction
+	dc.l intdb0 ;$14 Integer Div by 0
+	dc.l chkins ;$18 CHK, CHK2 Instruction
+	dc.l ftrapv ;$1C FTRAP, TRAP, TRAPV Instructions
+	dc.l privio ;$20 Priveledge Violation
+	dc.l trace ;$24 Trace
+	dc.l ln1010 ;$28 Line 1010($A) Emulator
+	dc.l ln1111 ;$2C Line 1111($F) Emulator
 	dc.l return ;$30 Reserved
-	dc.l return ;$34 Coprocessor Violation
-	dc.l return ;$38 Format Error
-	dc.l return ;$3C Uninitialized Interrupt
+	dc.l copvio ;$34 Coprocessor Violation
+	dc.l format ;$38 Format Error
+	dc.l uninit ;$3C Uninitialized Interrupt
 	dc.l return ;$40 Reserved
 	dc.l return ;$44 Reserved
 	dc.l return ;$48 Reserved
@@ -22,30 +22,30 @@
 	dc.l return ;$54 Reserved
 	dc.l return ;$58 Reserved
 	dc.l return ;$5C Reserved
-	dc.l return ;$60 Interrupt #0 (Unused)
-	dc.l return ;$64 Interrupt #1
-	dc.l return ;$68 Interrupt #2
-	dc.l return ;$6C Interrupt #3
+	dc.l inter0 ;$60 Interrupt #0 (Unused)
+	dc.l inter1 ;$64 Interrupt #1
+	dc.l extint ;$68 Interrupt #2
+	dc.l inter3 ;$6C Interrupt #3
 	dc.l Hblank ;$70 Interrupt #4 (H-int)
-	dc.l return ;$74 Interrupt #5
+	dc.l inter5 ;$74 Interrupt #5
 	dc.l Vblank ;$78 Interrupt #6 (V-int)
-	dc.l return ;$7C Interrupt #7
-	dc.l return ;$80 TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$84 TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$88 TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$8C TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$90 TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$94 TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$98 TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$9C TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$A0 TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$A4 TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$A8 TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$AC TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$B0 TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$B4 TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$B8 TRAP #0 D 15 Instruction Vectors
-	dc.l return ;$BC TRAP #0 D 15 Instruction Vectors
+	dc.l inter7 ;$7C Interrupt #7
+	dc.l trap00 ;$80 TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$84 TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$88 TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$8C TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$90 TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$94 TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$98 TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$9C TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$A0 TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$A4 TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$A8 TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$AC TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$B0 TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$B4 TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$B8 TRAP #0 D 15 Instruction Vectors
+	dc.l trap00 ;$BC TRAP #0 D 15 Instruction Vectors
 	dc.l return ;$C0 FP Branch or Set on Unordered Condition
 	dc.l return ;$C4 FP Inexact Result
 	dc.l return ;$C8 FP Div by 0
@@ -113,8 +113,7 @@ SetIO
 	move.b #0,$A10009
 	move.b #0,$A1000B
 	move.b #0,$A1000D
-	moveq #$FF,d0
-	swap d0
+	move.l #$FF0000,d0
 	movea.l d0,a0
 	moveq #0,d0
 	move.l d0,(a0)
@@ -125,14 +124,92 @@ InitVRAM
 	move.l #crw,(a0)
 	suba.w a0,a0
 	move.w #$0EC2,(a0)
+InitGame
+	
 looop
 	bra looop
 return
 	rts
+	dc.w $0000
+afault
+	rts
+	dc.w $0001
+aerror
+	rts
+	dc.w $0002
+illins
+	rts
+	dc.w $0003
+intdb0 ;$14 Integer Div by 0
+	rts
+	dc.w $0004
+chkins ;$18 CHK, CHK2 Instruction
+	rts
+	dc.w $0005
+ftrapv ;$1C FTRAP, TRAP, TRAPV Instructions
+	rts
+	dc.w $0006
+privio ;$20 Priveledge Violation
+	rts
+	dc.w $0007
+trace ;$24 Trace
+	rts
+	dc.w $0008
+ln1010 ;$28 Line 1010($A) Emulator
+	rts
+	dc.w $0009
+ln1111 ;$2C Line 1111($F) Emulator
+	rts
+	dc.w $000a
+copvio ;$34 Coprocessor Violation
+	rts
+	dc.w $000b
+format ;$38 Format Error
+	rts
+	dc.w $000c
+uninit ;$3C Uninitialized Interrupt
+	rts
+	dc.w $000d
 Hblank
 	rts
 Vblank
 	rts
+inter0 ;$60 Interrupt #0 (Unused)
+	rts
+	dc.w $000e
+inter1 ;$64 Interrupt #1
+	rts
+	dc.w $000f
+extint ;$68 Interrupt #2
+	rts
+	dc.w $0010
+inter3 ;$6C Interrupt #3
+	rts
+	dc.w $0011
+inter5 ;$74 Interrupt #5
+	rts
+	dc.w $0012
+inter7 ;$7C Interrupt #7
+	rts
+	dc.w $0013
+trap00 ;$80 TRAP #0 D 15 Instruction Vectors
+	rts
+	dc.w $0014
+	;dc.l trap01 ;$84 TRAP #0 D 15 Instruction Vectors
+	;dc.l trap02 ;$88 TRAP #0 D 15 Instruction Vectors
+	;dc.l trap03 ;$8C TRAP #0 D 15 Instruction Vectors
+	;dc.l trap04 ;$90 TRAP #0 D 15 Instruction Vectors
+	;dc.l trap05 ;$94 TRAP #0 D 15 Instruction Vectors
+	;dc.l trap06 ;$98 TRAP #0 D 15 Instruction Vectors
+	;dc.l trap07 ;$9C TRAP #0 D 15 Instruction Vectors
+	;dc.l trap08 ;$A0 TRAP #0 D 15 Instruction Vectors
+	;dc.l trap09 ;$A4 TRAP #0 D 15 Instruction Vectors
+	;dc.l trap0a ;$A8 TRAP #0 D 15 Instruction Vectors
+	;dc.l trap0b ;$AC TRAP #0 D 15 Instruction Vectors
+	;dc.l trap0c ;$B0 TRAP #0 D 15 Instruction Vectors
+	;dc.l trap0d ;$B4 TRAP #0 D 15 Instruction Vectors
+	;dc.l trap0e ;$B8 TRAP #0 D 15 Instruction Vectors
+	;dc.l trap0f ;$BC TRAP #0 D 15 Instruction Vectors
 WaitForVee
 	move.w vc,d6
 	andi.b #8,d6

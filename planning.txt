@@ -1,0 +1,26 @@
+planning document for the game
+
+this thing uses a bunch of instances like java.
+there are 2 main tables, one for classes, and one for instances.
+the class table contains pointers to subroutines that modify the instance.
+there are a total of 256 classes that take up $400 of memory.
+that's $4 bytes * $100 classes.
+the instances table is a table of memory addresses that contain instances.
+every frame the table is iterated over until it stops.
+all of this actually has nothing to do with what im makin for this game actually
+this ones a point and click escape room.
+the player controls the mouse pointer.
+the mouse pointer has some reserved memory that contains the x and y.
+--memory management
+the memory is gonna have a bunch of stuff in it.
+everything in the memory has a header.
+$FF0000 contains the first header's memory address.
+the header has the next header's memory address in it.
+it also has another pointer to what code to execute,
+as well as the variables.
+when a new thing gets added it looks for a header.
+if it doesnt find one in the range of memory that it needs then it takes that memory.
+when an object is removed, it goes to the previous header (or $FF0000 if its the first)
+and it puts its own next object header into that header.
+then the header is erased so the memory is freed.
+there are probably so many problems with this but i dont care.
