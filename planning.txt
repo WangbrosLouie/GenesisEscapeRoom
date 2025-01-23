@@ -1,26 +1,33 @@
 planning document for the game
 
-this thing uses a bunch of instances like java.
-there are 2 main tables, one for classes, and one for instances.
-the class table contains pointers to subroutines that modify the instance.
-there are a total of 256 classes that take up $400 of memory.
-that's $4 bytes * $100 classes.
-the instances table is a table of memory addresses that contain instances.
-every frame the table is iterated over until it stops.
-all of this actually has nothing to do with what im makin for this game actually
-this ones a point and click escape room.
 the player controls the mouse pointer.
-the mouse pointer has some reserved memory that contains the x and y.
+the mouse pointer is an object in memory.
 --memory management
 the memory is gonna have a bunch of stuff in it.
 everything in the memory has a header.
 $FF0000 contains the first header's memory address.
-the header has the next header's memory address in it.
-it also has another pointer to what code to execute,
-as well as the variables.
-when a new thing gets added it looks for a header.
+the header has the magic string "MEOW" in it(4 bytes),
+the next header's memory address(2 bytes),
+the pointer to what code to execute(4 bytes),
+the length of the object in memory(2 bytes),
+16 flags (2 bytes),
+as well as the variables(variable length).
+when a new thing gets added it looks for a header starting at the first header pointer.
 if it doesnt find one in the range of memory that it needs then it takes that memory.
+if it does it goes forward the amount of bytes the object takes and looks again.
 when an object is removed, it goes to the previous header (or $FF0000 if its the first)
 and it puts its own next object header into that header.
 then the header is erased so the memory is freed.
 there are probably so many problems with this but i dont care.
+--registers
+a0 will always be the current object reference, and a21 will be the previous one.
+--mouse cursor
+the mouse is controlled by the control pad. the object is hard coded to be the first one.
+the variables for the mouse are its position and the hitbox.
+the hitbox is 4 pixels wide and tall per tile,
+and is updated every frame, using the objects.
+every object that can be clicked on has the first flag bit set.
+if it is clickable, the x,y, width and height are used to draw it on the hitbox.
+objects further in memory will be drawn on top of the previous hitbox,
+so im going to try and avoid having overlapping clickable objects.
+the objects will also be drawn on the screen using the 1 function pointed to by the object.

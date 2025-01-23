@@ -125,9 +125,22 @@ InitVRAM
 	suba.w a0,a0
 	move.w #$0EC2,(a0)
 InitGame;make the mouse object and other ones maybe
-	
+	;move the tiles into the vram of the vdp of the genesis of sega of japan of the earth of the solar system of the milky way of the universe
+	lea mousepointer, a0
+	movea.l #vc,a1
+	move.l #8F02,(a1)
+	move.l vrw,(a1)
+	suba.w a0,a0
+	moveq #15,d0
+	move.l (a0)+,(a1)
+	dbra #-4,d0
+	;;initialize of the object of the mouse
+	movea.l #$FF0000, a0
+	move.w #$0080, (a0)
 looop;process the objects and wait for vsync
 	bra looop
+testobj
+	
 return
 	rts
 	dc.w $0000
