@@ -1,3 +1,4 @@
+mousepointer
 	dc.l	$20000000	;  Tile: 0
 	dc.l	$22000000
 	dc.l	$21200000
