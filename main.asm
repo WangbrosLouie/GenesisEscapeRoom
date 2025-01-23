@@ -124,9 +124,9 @@ InitVRAM
 	move.l #crw,(a0)
 	suba.w a0,a0
 	move.w #$0EC2,(a0)
-InitGame
+InitGame;make the mouse object and other ones maybe
 	
-looop
+looop;process the objects and wait for vsync
 	bra looop
 return
 	rts
@@ -245,4 +245,5 @@ VDPStuff:
 	dc.b	%00000000;21
 	dc.b	%00000000;22
 	dc.b	%00000000;23
-	;include "VData.asm"
+	include "palettes.asm"
+	include "mouseTiles.asm"
