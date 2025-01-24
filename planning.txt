@@ -7,11 +7,12 @@ the memory is gonna have a bunch of stuff in it.
 everything in the memory has a header.
 $FF0000 contains the first header's memory address.
 the header has the magic string "MEOW" in it(4 bytes),
-the next header's memory address(2 bytes),
 the pointer to what code to execute(4 bytes),
-the length of the object in memory(2 bytes),
+the next header's memory address(2 bytes),
+the length of the object in memory - 1(2 bytes),
 16 flags (2 bytes),
 as well as the variables(variable length).
+in total the header is 14 bytes + variables.
 when a new thing gets added it looks for a header starting at the first header pointer.
 if it doesnt find one in the range of memory that it needs then it takes that memory.
 if it does it goes forward the amount of bytes the object takes and looks again.
@@ -20,7 +21,7 @@ and it puts its own next object header into that header.
 then the header is erased so the memory is freed.
 there are probably so many problems with this but i dont care.
 --registers
-a0 will always be the current object reference, and a21 will be the previous one.
+a5 will always be the current object reference, and a6 will be the previous one.
 --mouse cursor
 the mouse is controlled by the control pad. the object is hard coded to be the first one.
 the variables for the mouse are its position and the hitbox.

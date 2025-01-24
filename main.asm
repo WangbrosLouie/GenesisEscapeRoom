@@ -64,9 +64,9 @@
 	dc.l return ;$FC Reserved
 header:
 	dc.b	"SEGA GENESIS    "
-	dc.b	"(C)LOUW 2023.APR"
+	dc.b	"(C)LOUW 2025.JAN"
+	dc.b	"出来ってば逃げる…                     "
 	dc.b	"Escape me if you can...                         "
-	dc.b	"SEGA GENESIS TEST                               "
 	dc.b	"GM 42042069-69"
 	dc.b	"69"
 	dc.b	"J               "
@@ -100,114 +100,122 @@ pstart
 	;beq VDP
 	move.l	#'SEGA',$A14000
 VDP
-	lea VDPStuff,a1
-	moveq #$18,d0
-	moveq #0,d1
-	move.w #$8000,d1
+	lea	VDPStuff,a1
+	moveq	#$18,d0
+	moveq	#0,d1
+	move.w	#$8000,d1
 SetVDP
-	move.b (a1)+,d1
-	move.w d1,vc
-	addi.w #$100,d1
-	dbra d0,SetVDP
+	move.b	(a1)+,d1
+	move.w	d1,vc
+	addi.w	#$100,d1
+	dbra	d0,SetVDP
 SetIO
-	move.b #0,$A10009
-	move.b #0,$A1000B
-	move.b #0,$A1000D
-	move.l #$FF0000,d0
-	movea.l d0,a0
-	moveq #0,d0
-	move.l d0,(a0)
-	movem.l (a0),d1-d7/a1-a6
-	move.w #$2700,sr
+	move.b	#0,$A10009
+	move.b	#0,$A1000B
+	move.b	#0,$A1000D
+	move.l	#$FF0000,d0
+	movea.l	d0,a0
+	moveq	#0,d0
+	move.l	d0,(a0)
+	movem.l	(a0),d1-d7/a1-a6
+	move.w	#$2700,sr
 InitVRAM
-	movea.l #vc,a0
-	move.l #crw,(a0)
-	suba.w a0,a0
-	move.w #$0EC2,(a0)
+	movea.l	#vc,a0
+	move.l	#crw,(a0)
+	suba.w	a0,a0
+	move.w	#$0EC2,(a0)
 InitGame;make the mouse object and other ones maybe
 	;move the tiles into the vram of the vdp of the genesis of sega of japan of the earth of the solar system of the milky way of the universe
-	lea mousepointer, a0
-	movea.l #vc,a1
-	move.l #8F02,(a1)
-	move.l vrw,(a1)
-	suba.w a0,a0
-	moveq #15,d0
-	move.l (a0)+,(a1)
-	dbra #-4,d0
-	;;initialize of the object of the mouse
-	movea.l #$FF0000, a0
-	move.w #$0080, (a0)
+	lea mousepointer,a0
+	moveq	#15,d0
+	bsr	LoadCRAM
+	;initialize of the object of the mouse
+	moveq	#1,d1
+	movea.l #$FF0000,a0
+	move.w	#$0080,(8,a0)
+	adda.w	(8,a0),a0;this is unoptimized on purpose
+mewo
+	moveq	#0,d0
+	move.l	#'MEOW',(a0)+
+	move.l	#testobj,(a0)+
+	move.w	d0,(a0)+
+	move.l	#$F00,(a0)+
+	move.l	d0,(a0)+
+	dbra	d1,mewo
 looop;process the objects and wait for vsync
-	bra looop
+	bsr	WaitForVee
+	move.l	#$FF0000,a5
+lookobjs
+	movea.l	a5,a6;move current object to last object
+	move.l	a5,d0;because the stupid address is sign extended on a registers
+	move.w	(8,a6),d0;get new object
+	move.l	d0,a5
+	cmp.l	#'MEOW',(a5);is it an object?
+	bne	nomoreobjs;extremely rudimentary error handler/end of loop
+	movea.l (4,a5),a0
+	jsr	(a0);do the subroutine
+	bra lookobjs
+nomoreobjs
+	bsr	DoneWithVee
+	bra	looop
 testobj
-	
+	add.w	#14,a5
+	move.w	#$8700,d0
+	move.b	(a5),d0
+	add.b	#1,d0
+	move.b	d0,(a5)
+	move.l	#vc,a0
+	move.w	d0,(a0)
+	sub.w	#14,a5
+	rts
+	dc.l	'MEOW'
 return
 	rts
-	dc.w $0000
 afault
 	rts
-	dc.w $0001
 aerror
 	rts
-	dc.w $0002
 illins
 	rts
-	dc.w $0003
 intdb0 ;$14 Integer Div by 0
 	rts
-	dc.w $0004
 chkins ;$18 CHK, CHK2 Instruction
 	rts
-	dc.w $0005
 ftrapv ;$1C FTRAP, TRAP, TRAPV Instructions
 	rts
-	dc.w $0006
 privio ;$20 Priveledge Violation
 	rts
-	dc.w $0007
 trace ;$24 Trace
 	rts
-	dc.w $0008
 ln1010 ;$28 Line 1010($A) Emulator
 	rts
-	dc.w $0009
 ln1111 ;$2C Line 1111($F) Emulator
 	rts
-	dc.w $000a
 copvio ;$34 Coprocessor Violation
 	rts
-	dc.w $000b
 format ;$38 Format Error
 	rts
-	dc.w $000c
 uninit ;$3C Uninitialized Interrupt
 	rts
-	dc.w $000d
 Hblank
 	rts
 Vblank
 	rts
 inter0 ;$60 Interrupt #0 (Unused)
 	rts
-	dc.w $000e
 inter1 ;$64 Interrupt #1
 	rts
-	dc.w $000f
 extint ;$68 Interrupt #2
 	rts
-	dc.w $0010
 inter3 ;$6C Interrupt #3
 	rts
 	dc.w $0011
 inter5 ;$74 Interrupt #5
 	rts
-	dc.w $0012
 inter7 ;$7C Interrupt #7
 	rts
-	dc.w $0013
 trap00 ;$80 TRAP #0 D 15 Instruction Vectors
 	rts
-	dc.w $0014
 	;dc.l trap01 ;$84 TRAP #0 D 15 Instruction Vectors
 	;dc.l trap02 ;$88 TRAP #0 D 15 Instruction Vectors
 	;dc.l trap03 ;$8C TRAP #0 D 15 Instruction Vectors
@@ -224,15 +232,30 @@ trap00 ;$80 TRAP #0 D 15 Instruction Vectors
 	;dc.l trap0e ;$B8 TRAP #0 D 15 Instruction Vectors
 	;dc.l trap0f ;$BC TRAP #0 D 15 Instruction Vectors
 WaitForVee
-	move.w vc,d6
-	andi.b #8,d6
+	move.w vc,d7
+	andi.b #8,d7
 	bne WaitForVee
 	rts
 DoneWithVee
-	move.w vc,d6
-	andi.b #8,d6
+	move.w vc,d7
+	andi.b #8,d7
 	beq DoneWithVee
 	rts
+LoadCRAM
+;a0 = location of colours
+;d0 = amount of colours - 1
+	movea.l	#vc,a1
+	move.l	#$8F02,(a1)
+	move.l	vrw,(a1)
+	suba.w	a0,a0
+	moveq	#15,d0
+LoadCRAM1
+	move.l	(a0)+,(a1)
+	dbra	d0,LoadCRAM1
+	rts
+newObject
+;d0 = length of object (lower word)
+;scan for next object
 VDPStuff:
 	dc.b	%00000100;0 Mode 1
 	dc.b	%01000100;1 Mode 2
