@@ -168,7 +168,13 @@ testobj
 	move.w	d0,(a0)
 	sub.w	#14,a5
 	rts
-	dc.l	'MEOW'
+obj_button
+	jsr P1Ctrl
+	;do the rest later cause im not gettin insomnia today
+;the variables are one byte which is which colour in the palette to swap to and a one bit debounce.
+;the code checks if the a button is pushed, then if not debounced, then if the pointer is in range.
+;if all checks pass then the colour changes and the debounce is set.
+;if the a button is released and it is debounced then the debounce is cleared.
 return
 	rts
 	bra *+$1
@@ -233,16 +239,6 @@ trap00 ;$80 TRAP #0 D 15 Instruction Vectors
 	;dc.l trap0d ;$B4 TRAP #0 D 15 Instruction Vectors
 	;dc.l trap0e ;$B8 TRAP #0 D 15 Instruction Vectors
 	;dc.l trap0f ;$BC TRAP #0 D 15 Instruction Vectors
-WaitForVee
-	move.w vc,d7
-	andi.b #8,d7
-	bne WaitForVee
-	rts
-DoneWithVee
-	move.w vc,d7
-	andi.b #8,d7
-	beq DoneWithVee
-	rts
 LoadCRAM
 ;a0 = location of colours
 ;d0 = amount of colours - 1
@@ -283,5 +279,18 @@ VDPStuff:
 	dc.b	%00000000;21
 	dc.b	%00000000;22
 	dc.b	%00000000;23
+	include "subroute.asm";good ol recycled file from the stupid genesis tophat turmoil
 	include "palettes.asm"
 	include "mouseTiles.asm"
+	
+;Controller Guide;yet again from the stupid seghat genmoil
+;0011 0011 0111 1111
+;--SA --DU --CB RLDU
+;0011 0010 0111 1110 (Up)
+;0011 0001 0111 1101 (Dn)
+;0011 0011 0111 1011 (Lt)
+;0011 0011 0111 0111 (Rt)
+;0010 0011 0111 1111 (A)
+;0011 0011 0110 1111 (B)
+;0011 0011 0101 1111 (C)
+;0001 0011 0111 1111 (S)

@@ -5,7 +5,7 @@ the mouse pointer is an object in memory.
 --memory management
 the memory is gonna have a bunch of stuff in it.
 everything in the memory has a header.
-$FF0000 contains the first header's memory address.
+$FF0008 contains the first header's memory address.
 the header has the magic string "MEOW" in it(4 bytes),
 the pointer to what code to execute(4 bytes),
 the next header's memory address(2 bytes),
@@ -22,8 +22,11 @@ then the header is erased so the memory is freed.
 there are probably so many problems with this but i dont care.
 --registers
 a5 will always be the current object reference, and a6 will be the previous one.
-they are backed up at $FF0000 and $FF0004.
+they are backed up at $FF0000 and $FF0002.
 --mouse cursor
+the mouse cursor object has the x and y coordinates as the variables.
+the processing part does nothing(rts). the testing is done within each object.
+vvv note this stuff down below is the backup plan now cause its very inefficient vvv
 the mouse is controlled by the control pad. the object is hard coded to be the first one.
 the variables for the mouse are its position and the hitbox.
 the hitbox is 4 pixels wide and tall per tile,
@@ -33,3 +36,9 @@ if it is clickable, the x,y, width and height are used to draw it on the hitbox.
 objects further in memory will be drawn on top of the previous hitbox,
 so im going to try and avoid having overlapping clickable objects.
 the objects will also be drawn on the screen using the 1 function pointed to by the object.
+--colour changing button
+contrary to the name it changes the background colour.
+the variables are one byte which is which colour in the palette to swap to and a one bit debounce.
+the code checks if the a button is pushed, then if not debounced, then if the pointer is in range.
+if all checks pass then the colour changes and the debounce is set.
+if the a button is released and it is debounced then the debounce is cleared.
