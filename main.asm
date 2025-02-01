@@ -158,6 +158,8 @@ lookobjs
 nomoreobjs
 	bsr	DoneWithVee
 	bra	looop
+	dc.w	%0000000000000000
+	dc.w	$1
 testobj
 	add.w	#14,a5
 	move.w	#$8700,d0
@@ -168,9 +170,12 @@ testobj
 	move.w	d0,(a0)
 	sub.w	#14,a5
 	rts
+	dc.w	%0000000000000000
+	dc.w	$2
 obj_button
 	jsr P1Ctrl
 	;do the rest later cause im not gettin insomnia today
+	rts
 ;the variables are one byte which is which colour in the palette to swap to and a one bit debounce.
 ;the code checks if the a button is pushed, then if not debounced, then if the pointer is in range.
 ;if all checks pass then the colour changes and the debounce is set.

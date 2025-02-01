@@ -100,5 +100,26 @@ DMA2FILL ;Registers: d0: Source d1: Destination d2: Length in bytes
 	andi.b #2,d0
 	bne *-$A
 	rts
-	
-	
+new_Obj;a0: pointy pointer to code
+	;destroys d0,d1,d2,a1
+	;move.w	(-4,a0),d0
+	move.l	#$FF0000,a1
+	move.l	#$FF0000,d0
+	move.w	(-8,a0),d1
+	;move.l	a5,(a1)+
+	;move.l	a6,(a1)
+	;subq.w	#4,a1
+new_Obj1
+	moveq	#0,d2
+	move.w	d1,d2
+new_Obj2
+	move.w	(8,a1),d0;find next memory thing
+	move.l	d0,a1
+	cmp.l	#'MEOW',(a1)
+	beq	new_Obj1
+	dbra	d2,new_Obj2
+	move.l	#'MEOW',(a1)+
+	move.l	a0,(a1)+
+	move.w	d1,(a1)+
+	move.w	(-10,a0),(a1)+
+	rts
