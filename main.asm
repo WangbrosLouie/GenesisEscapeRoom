@@ -95,6 +95,9 @@ scw = $C000 ;Window
 sch = $C800 ;H Scroll
 sat = $CC00 ;Sprite Attrib. Table
 pstart
+	;soft or hard reset
+	cmpi.l	#'MEOW',$FF0004
+	beq	InitGame
 	move.b $A10001,d0
 	andi.b #$0F,d0
 	beq VDP
@@ -119,11 +122,19 @@ SetIO
 	move.l	d0,(a0)
 	movem.l	(a0),d1-d7/a1-a6
 	move.w	#$2700,sr
+InitRAM
+	moveq	#0,d1
+	move.l	#$3FFF,d0
+	move.l	#$FF0000,a0
+	move.l	d1,(a0)+
+	dbra	d0,-4
 InitVRAM
 	movea.l	#vc,a0
 	move.l	#crw,(a0)
 	suba.w	a0,a0
 	move.w	#$0EC2,(a0)
+
+
 InitGame;make the mouse object and other ones maybe
 	;move the tiles into the vram of the vdp of the genesis of sega of japan of the earth of the solar system of the milky way of the universe
 	lea mousepointer,a0

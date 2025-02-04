@@ -12,11 +12,11 @@ InputRead
 	move.b c2,d7
 	rts
 P1Ctrl
-	move.b #$00,cc1
+	move.b #$00,c1
 	nop
 	nop
 	move.b c1,d7
-	move.b #$40,cc1
+	move.b #$40,c1
 	rol.w #8,d7
 	move.b c1,d7
 	rts
