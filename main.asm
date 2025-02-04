@@ -1,4 +1,4 @@
-	dc.l $FFFFFE ;$00 SP Initial Value
+vector:	dc.l $FFFFFE ;$00 SP Initial Value
 	dc.l pstart ;$04 PC Initial Value
 	dc.l afault ;$08 Access Fault
 	dc.l aerror ;$0C Address Error
@@ -62,8 +62,7 @@
 	dc.l return ;$F4 Reserved
 	dc.l return ;$F8 Reserved
 	dc.l return ;$FC Reserved
-header:
-	dc.b	"SEGA GENESIS    "
+header:	dc.b	"SEGA GENESIS    "
 	dc.b	"(C)LOUW 2025.JAN"
 	dc.b	"出来ってば逃げる…                     "
 	dc.b	"Escape me if you can...                         "
@@ -102,161 +101,118 @@ sat = $CC00 ;Sprite Attrib. Table
 ;meaning that mnemonics that take only 3 characters like bra or exg must be double indented.
 ;even more nightmarish are the operands which can be as little as one character to 20 (at least the ones i might use).
 ;but the comments i dont care much about as long as all of them in between 2 labels are the same indent level
+;indents are at 8 cause i cant configure them in nano i think and also windows 11 notepad
 ;and thats all i think
 ;my code is gonna look so old fashioned and retro
 
 pstart	cmpi.l	#'MRAU',$FF0004	;check if soft or hard reset
-		beq	InitM			;if it is then skip init
-		move.b $A10001,d0		;do the tmss thing
-		andi.b #$0F,d0
-		beq VDP
-		move.l	#'SEGA',$A14000
-VDP		lea	VDPStuff,a1		;load them vdp registers
-		moveq	#$18,d0		;i would make this into a
-		moveq	#0,d1		;subroutine but im too lazy rn
-		move.w	#$8000,d1
+	beq	InitM			;if it is then skip init
+	move.b	$A10001,d0		;do the tmss thing
+	andi.b	#$0F,d0
+	beq VDP
+	move.l	#'SEGA',$A14000
+VDP	lea	VDPStuff,a1		;load them vdp registers
+	moveq	#$18,d0		;i would make this into a
+	moveq	#0,d1		;subroutine but im too lazy rn
+	move.w	#$8000,d1
 SetVDP	move.b	(a1)+,d1
-		move.w	d1,vc
-		addi.w	#$100,d1
-		dbra	d0,SetVDP
+	move.w	d1,vc
+	addi.w	#$100,d1
+	dbra	d0,SetVDP
 SetIO	move.b	#0,$A10009	;make them controllers readable
-		move.b	#0,$A1000B
-		move.b	#0,$A1000D
-		move.l	#$FF0000,d0
-		movea.l	d0,a0
-		moveq	#0,d0
-		move.l	d0,(a0)
-		movem.l	(a0),d1-d7/a1-a6
-		move.w	#$2700,sr
+	move.b	#0,$A1000B
+	move.b	#0,$A1000D
+	move.l	#$FF0000,d0
+	movea.l	d0,a0
+	moveq	#0,d0
+	move.l	d0,(a0)
+	movem.l	(a0),d1-d7/a1-a6
+	move.w	#$2700,sr
 InitM	moveq	#0,d1		;Init Memory
-		move.l	#$3FFF,d0
-		move.l	#$FF0000,a0
+	move.l	#$3FFF,d0
+	move.l	#$FF0000,a0
 InitM1	move.l	d1,(a0)+	;this is what happens when 7 char limit
-		dbra	d0,InitM1
+	dbra	d0,InitM1
 InitVM	move.l	#$FF0000,d0
-		moveq	#0,d1
-		move.l	#$FFFF,d2
-		;jsr		DMA2FILL ;gonna debug this later
-		movea.l	#vc,a0		;Init Video Memory
-		move.l	#crw,(a0)
-		suba.w	a0,a0
-		move.w	#$0EC2,(a0)
-
-		move.l	#'MRAU',$FF0004	;its meowin finished initializing
-InitG	lea mousepointer,a0		;initialize game
-		moveq	#15,d0
-		bsr	LoadCRAM
-		moveq	#1,d1			;initialize of the object of the mouse
-		;movea.l #$FF0000,a0
-		;move.w	#$0080,(8,a0)	;first object hardcoded to $FF0080
-		;adda.w	(8,a0),a0		;this is unoptimized on purpose
-		bra mewo2
-mewo	moveq	#0,d0			;make some objects
-		move.l	#'MEOW',(a0)+
-		move.l	#testobj,(a0)+
-		move.w	d0,(a0)+
-		move.l	#$F00,(a0)+
-		move.l	d0,(a0)+
-		dbra	d1,mewo
+	moveq	#0,d1
+	move.l	#$FFFF,d2
+	;jsr	DMA2FILL ;gonna debug this later
+	movea.l	#vc,a0		;Init Video Memory
+	move.l	#crw,(a0)
+	suba.w	a0,a0
+	move.w	#$0EC2,(a0)
+	move.l	#'MRAU',$FF0004	;its meowin finished initializing
+InitG	lea	mousepointer,a0	;initialize game
+	moveq	#15,d0
+	bsr	LoadCM
+	moveq	#1,d1		;initialize of the object of the mouse
+	bra	mewo2
+mewo	moveq	#0,d0		;make some objects
+	move.l	#'MEOW',(a0)+
+	move.l	#testobj,(a0)+
+	move.w	d0,(a0)+
+	move.l	#$F00,(a0)+
+	move.l	d0,(a0)+
+	dbra	d1,mewo
 mewo2	lea	testobj,a0
-		jsr	newObj
-looop	jsr	WaitForVee			;process the objects and wait for vsync
-		move.l	#$FF0000,a5
-lookobj	movea.l	a5,a6			;move current object to last object
-		move.l	a5,d0			;because the stupid address is sign extended on a registers
-		move.w	(8,a6),d0		;get new object
-		move.l	d0,a5
-		cmp.l	#'MEOW',(a5)	;is it an object?
-		bne	doneobj				;extremely rudimentary error handler/end of loop
-		movea.l (4,a5),a0
-		jsr	(a0)				;do the object subroutine
-		bra lookobj
-doneobj	bsr	DoneWithVee			;done with processing the objects
-		bra	looop
-		dc.w	%0000000000000000	;object stuff pay it no mind
-		dc.w	$1
+	jsr	newObj
+looop	jsr	WaitForVee	;process the objects and wait for vsync
+	move.l	#$FF0000,a5
+lookobj	movea.l	a5,a6		;move current object to last object
+	move.l	a5,d0		;because the stupid address is sign extended on a registers
+	move.w	(8,a6),d0	;get new object
+	move.l	d0,a5
+	cmp.l	#'MEOW',(a5)	;is it an object?
+	bne	doneobj		;extremely rudimentary error handler/end of loop
+	movea.l	(4,a5),a0
+	jsr	(a0)		;do the object subroutine
+	bra	lookobj
+doneobj	bsr	DoneWithVee		;done with processing the objects
+	bra	looop
+	dc.w	%0000000000000000	;object stuff pay it no mind
+	dc.w	$1
 testobj	add.w	#14,a5		;seizure inducing background flash goooo-
-		move.w	#$8700,d0
-		move.b	(a5),d0
-		add.b	#1,d0
-		move.b	d0,(a5)
-		move.l	#vc,a0
-		move.w	d0,(a0)
-		sub.w	#14,a5
-		rts
-		dc.w	%0000000000000000
-		dc.w	$2
-button	jsr P1Ctrl	;do the rest later cause im not gettin insomnia today
+	move.w	#$8700,d0
+	move.b	(a5),d0
+	add.b	#1,d0
+	move.b	d0,(a5)
+	move.l	#vc,a0
+	move.w	d0,(a0)
+	sub.w	#14,a5
+	rts
+	dc.w	%0000000000000000
+	dc.w	$2
+button	jsr	P1Ctrl	;do the rest later cause im not gettin insomnia today
+
 	rts
 ;the variables are one byte which is which colour in the palette to swap to and a one bit debounce.
 ;the code checks if the a button is pushed, then if not debounced, then if the pointer is in range.
 ;if all checks pass then the colour changes and the debounce is set.
 ;if the a button is released and it is debounced then the debounce is cleared.
-return
-	rts
-	bra *+$1
-afault
-	rts
-	bra *+$2
-aerror
-	rts
-illins
-	rts
-intdb0 ;$14 Integer Div by 0
-	rts
-chkins ;$18 CHK, CHK2 Instruction
-	rts
-ftrapv ;$1C FTRAP, TRAP, TRAPV Instructions
-	rts
-privio ;$20 Priveledge Violation
-	rts
-trace ;$24 Trace
-	rts
-ln1010 ;$28 Line 1010($A) Emulator
-	rts
-ln1111 ;$2C Line 1111($F) Emulator
-	rts
-copvio ;$34 Coprocessor Violation
-	rts
-format ;$38 Format Error
-	rts
-uninit ;$3C Uninitialized Interrupt
-	rts
-Hblank
-	rts
-Vblank
-	rts
-inter0 ;$60 Interrupt #0 (Unused)
-	rts
-inter1 ;$64 Interrupt #1
-	rts
-extint ;$68 Interrupt #2
-	rts
-inter3 ;$6C Interrupt #3
-	rts
-	dc.w $0011
-inter5 ;$74 Interrupt #5
-	rts
-inter7 ;$7C Interrupt #7
-	rts
-trap00 ;$80 TRAP #0 D 15 Instruction Vectors
-	rts
-	;dc.l trap01 ;$84 TRAP #0 D 15 Instruction Vectors
-	;dc.l trap02 ;$88 TRAP #0 D 15 Instruction Vectors
-	;dc.l trap03 ;$8C TRAP #0 D 15 Instruction Vectors
-	;dc.l trap04 ;$90 TRAP #0 D 15 Instruction Vectors
-	;dc.l trap05 ;$94 TRAP #0 D 15 Instruction Vectors
-	;dc.l trap06 ;$98 TRAP #0 D 15 Instruction Vectors
-	;dc.l trap07 ;$9C TRAP #0 D 15 Instruction Vectors
-	;dc.l trap08 ;$A0 TRAP #0 D 15 Instruction Vectors
-	;dc.l trap09 ;$A4 TRAP #0 D 15 Instruction Vectors
-	;dc.l trap0a ;$A8 TRAP #0 D 15 Instruction Vectors
-	;dc.l trap0b ;$AC TRAP #0 D 15 Instruction Vectors
-	;dc.l trap0c ;$B0 TRAP #0 D 15 Instruction Vectors
-	;dc.l trap0d ;$B4 TRAP #0 D 15 Instruction Vectors
-	;dc.l trap0e ;$B8 TRAP #0 D 15 Instruction Vectors
-	;dc.l trap0f ;$BC TRAP #0 D 15 Instruction Vectors
-LoadCRAM	;im gonna write a dma version of this maybe
+return	bra	*-2	;generic return
+afault	bra	*-2
+aerror	bra	*-2
+illins	bra	*-2
+intdb0	bra	*-2	;$14 Integer Div by 0
+chkins	bra	*-2	;$18 CHK, CHK2 Instruction
+ftrapv	bra	*-2	;$1C FTRAP, TRAP, TRAPV Instructions
+privio	bra	*-2	;$20 Priveledge Violation
+trace	bra	*-2	;$24 Trace
+ln1010	bra	*-2	;$28 Line 1010($A) Emulator
+ln1111	bra	*-2	;$2C Line 1111($F) Emulator
+copvio	bra	*-2	;$34 Coprocessor Violation
+format	bra	*-2	;$38 Format Error
+uninit	bra	*-2	;$3C Uninitialized Interrupt
+Hblank	rts		;Horizontal Interrupt
+Vblank	rts		;Vertical Interrupt
+inter0	bra	*-2	;$60 Interrupt #0 (Unused)
+inter1	bra	*-2	;$64 Interrupt #1
+extint	bra	*-2	;$68 Interrupt #2
+inter3	bra	*-2	;$6C Interrupt #3
+inter5	bra	*-2	;$74 Interrupt #5
+inter7	bra	*-2	;$7C Interrupt #7
+trap00	bra	*-2	;$80 TRAP #0 D 15 Instruction Vectors
+LoadCM	;im gonna write a dma version of this maybe
 ;a0 = location of colours
 ;d0 = amount of colours - 1
 	movea.l	#vc,a1
@@ -264,45 +220,44 @@ LoadCRAM	;im gonna write a dma version of this maybe
 	move.l	vrw,(a1)
 	suba.w	a0,a0
 	moveq	#15,d0
-LoadCRAM1
-	move.l	(a0)+,(a1)
-	dbra	d0,LoadCRAM1
+LoadCM1	move.l	(a0)+,(a1)
+	dbra	d0,LoadCM1
 	rts
 newObj	;a0 = address of object subroutine
-		;destroys d0 d1 a1 a2
-		;wont work for objects with 0 variables (which at that point what does the object even do)
-		;you can just have a 1 byte dummy variable as a workaround for now but it aint mem efficient
-		moveq	#0,d0
-		move.w	(-2,a0),d0
-		movea.l	#$FF007E,a1
+	;destroys d0 d1 a1 a2
+	;wont work for objects with 0 variables (which at that point what does the object even do)
+	;you can just have a 1 byte dummy variable as a workaround for now but it aint mem efficient
+	moveq	#0,d0
+	move.w	(-2,a0),d0
+	movea.l	#$FF007E,a1
 newObj1	move.l	d0,d1
-		addq.w	#1,d1
-		divu.w	#2,d1
-		bclr.l	#16,d1
-		addq.w	#7,d1
-		addq.w	#2,a1
+	addq.w	#1,d1
+	divu.w	#2,d1
+	bclr.l	#16,d1
+	addq.w	#7,d1
+	addq.w	#2,a1
 newObj2	cmp.l	#'MEOW',(a1)	;check for existance of an object
-		beq		newObj1
-		move.w	#0,(a1)+		;cause if the memory might be used later why not clear it now
-		dbra	d1,newObj2		;idk what to do if this search wraps around into the forbidden territory
-		move.l	#$FF0000,a2
-		tst.w	(8,a2)
-		beq newObj4
+	beq	newObj1
+	move.w	#0,(a1)+		;cause if the memory might be used later why not clear it now
+	dbra	d1,newObj2		;idk what to do if this search wraps around into the forbidden territory
+	move.l	#$FF0000,a2
+	tst.w	(8,a2)
+	beq newObj4
 newObj3	tst.w	(8,a2)			;go look for the last object in the daisy chain
-		bne newObj3
+	bne newObj3
 newObj4	sub.w	d0,a1			;move the register to start of vars
-		sub.w	#$14,a1			;move the register to start of object
-		exg		d0,a1
-		bclr	#0,d0
-		exg		d0,a1
-		move.w	a1,(8,a2)
-		move.l	#'MEOW',(a1)+	;initialize initialize initialize
-		move.l	a0,(a1)+
-		move.w	#0,(a1)+
-		subq.w	#1,d0
-		move.w	d0,(a1)+
-		move.w	(-4,a0),(a1)+
-		rts	;i retract my previous statement about not getting insomnia coding this
+	sub.w	#$14,a1			;move the register to start of object
+	exg	d0,a1
+	bclr	#0,d0
+	exg	d0,a1
+	move.w	a1,(8,a2)
+	move.l	#'MEOW',(a1)+	;initialize initialize initialize
+	move.l	a0,(a1)+
+	move.w	#0,(a1)+
+	subq.w	#1,d0
+	move.w	d0,(a1)+
+	move.w	(-4,a0),(a1)+
+	rts	;i retract my previous statement about not getting insomnia coding this
 VDPStuff:
 	dc.b	%00000100;0 Mode 1
 	dc.b	%01000100;1 Mode 2
