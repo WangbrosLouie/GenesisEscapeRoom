@@ -80,6 +80,8 @@ header:	dc.b	"SEGA GENESIS    "
 	dc.b	"             "
 c1 = $A10003
 c2 = $A10005
+cc1 = $A10009
+cc2 = $A1000B
 vc = $C00004
 vd = $C00000
 vrw = $40000000
@@ -106,12 +108,22 @@ sat = $CC00 ;Sprite Attrib. Table
 ;my code is gonna look so old fashioned and retro
 
 pstart	cmpi.l	#'MRAU',$FF0004	;check if soft or hard reset
-	beq	InitM			;if it is then skip init
+	beq	VDP			;if it is then skip init
 	move.b	$A10001,d0		;do the tmss thing
 	andi.b	#$0F,d0
-	beq VDP
+	beq SetIO
 	move.l	#'SEGA',$A14000
-VDP	lea	VDPStuff,a1		;load them vdp registers
+SetIO	move.b	#0,$A10009	;make them controllers readable
+	move.b	#0,$A1000B
+	move.b	#0,$A1000D
+ClrAll	;move.l	#$FF0000,d0	;clear the registers
+	;movea.l	d0,a0
+	;moveq	#0,d0
+	;move.l	d0,(a0)
+	;movem.l	(a0),d1-d7/a1-a6
+	
+	move.w	#$2700,sr
+VDP	lea	VDPStuff,a1	;load them vdp registers
 	moveq	#$18,d0		;i would make this into a
 	moveq	#0,d1		;subroutine but im too lazy rn
 	move.w	#$8000,d1
@@ -119,19 +131,10 @@ SetVDP	move.b	(a1)+,d1
 	move.w	d1,vc
 	addi.w	#$100,d1
 	dbra	d0,SetVDP
-SetIO	move.b	#0,$A10009	;make them controllers readable
-	move.b	#0,$A1000B
-	move.b	#0,$A1000D
-	move.l	#$FF0000,d0
-	movea.l	d0,a0
-	moveq	#0,d0
-	move.l	d0,(a0)
-	movem.l	(a0),d1-d7/a1-a6
-	move.w	#$2700,sr
 InitM	moveq	#0,d1		;Init Memory
 	move.l	#$3FFF,d0
 	move.l	#$FF0000,a0
-InitM1	move.l	d1,(a0)+	;this is what happens when 7 char limit
+InitM1	move.l	d1,(a0)+
 	dbra	d0,InitM1
 InitVM	move.l	#$FF0000,d0
 	moveq	#0,d1
@@ -146,17 +149,19 @@ InitG	lea	mousepointer,a0	;initialize game
 	moveq	#15,d0
 	bsr	LoadCM
 	moveq	#1,d1		;initialize of the object of the mouse
-	bra	mewo2
+	bra	mewo_v2
 mewo	moveq	#0,d0		;make some objects
-	move.l	#'MEOW',(a0)+
-	move.l	#testobj,(a0)+
+	move.l	#'MEOW',(a0)+	;this mewo aint a reference to mysticat btw
+	move.l	#testobj,(a0)+	;its only a typo
 	move.w	d0,(a0)+
 	move.l	#$F00,(a0)+
 	move.l	d0,(a0)+
 	dbra	d1,mewo
-mewo2	lea	testobj,a0
+mewo_v2	lea	mouse,a0
 	jsr	newObj
+	
 looop	jsr	WaitForVee	;process the objects and wait for vsync
+	bsr	P1Ctrl
 	move.l	#$FF0000,a5
 lookobj	movea.l	a5,a6		;move current object to last object
 	move.l	a5,d0		;because the stupid address is sign extended on a registers
@@ -181,38 +186,56 @@ testobj	add.w	#14,a5		;seizure inducing background flash goooo-
 	sub.w	#14,a5
 	rts
 	dc.w	%0000000000000000
-	dc.w	$2
-button	jsr	P1Ctrl	;do the rest later cause im not gettin insomnia today
-
+	dc.w	$1	;curse that minimum variable size
+mouse	move.l	#$FF0016,a0
+	move.w	(-12,a0),d0
+	btst	#$0,d0
+	bne	*+4
+	sub.w	#1,(a0)
+	btst	#$1,d0
+	bne	*+4
+	add.w	#1,(a0)
+	btst	#$2,d0
+	bne	*+6
+	sub.w	#1,(+2,a0)
+	btst	#$3,d0
+	bne	*+6
+	add.w	#1,(+2,a0)
+	;calculate window stuff
+	;draw somethin now ya doofus
+	rts
+	dc.w	%0000000000000000
+	dc.w	$4
+button	;button processing here	
 	rts
 ;the variables are one byte which is which colour in the palette to swap to and a one bit debounce.
 ;the code checks if the a button is pushed, then if not debounced, then if the pointer is in range.
 ;if all checks pass then the colour changes and the debounce is set.
 ;if the a button is released and it is debounced then the debounce is cleared.
-return	bra	*-2	;generic return
-afault	bra	*-2
-aerror	bra	*-2
-illins	bra	*-2
-intdb0	bra	*-2	;$14 Integer Div by 0
-chkins	bra	*-2	;$18 CHK, CHK2 Instruction
-ftrapv	bra	*-2	;$1C FTRAP, TRAP, TRAPV Instructions
-privio	bra	*-2	;$20 Priveledge Violation
-trace	bra	*-2	;$24 Trace
-ln1010	bra	*-2	;$28 Line 1010($A) Emulator
-ln1111	bra	*-2	;$2C Line 1111($F) Emulator
-copvio	bra	*-2	;$34 Coprocessor Violation
-format	bra	*-2	;$38 Format Error
-uninit	bra	*-2	;$3C Uninitialized Interrupt
-Hblank	rts		;Horizontal Interrupt
-Vblank	rts		;Vertical Interrupt
-inter0	bra	*-2	;$60 Interrupt #0 (Unused)
-inter1	bra	*-2	;$64 Interrupt #1
-extint	bra	*-2	;$68 Interrupt #2
-inter3	bra	*-2	;$6C Interrupt #3
-inter5	bra	*-2	;$74 Interrupt #5
-inter7	bra	*-2	;$7C Interrupt #7
-trap00	bra	*-2	;$80 TRAP #0 D 15 Instruction Vectors
-LoadCM	;im gonna write a dma version of this maybe
+return	bra	*-0	;generic return
+afault	bra	*-0
+aerror	bra	*-0
+illins	bra	*-0
+intdb0	bra	*-0	;$14 Integer Div by 0
+chkins	bra	*-0	;$18 CHK, CHK2 Instruction
+ftrapv	bra	*-0	;$1C FTRAP, TRAP, TRAPV Instructions
+privio	bra	*-0	;$20 Priveledge Violation
+trace	bra	*-0	;$24 Trace
+ln1010	bra	*-0	;$28 Line 1010($A) Emulator
+ln1111	bra	*-0	;$2C Line 1111($F) Emulator
+copvio	bra	*-0	;$34 Coprocessor Violation
+format	bra	*-0	;$38 Format Error
+uninit	bra	*-0	;$3C Uninitialized Interrupt
+Hblank	rts		;Horizontal Interrupt i should map these to ram addresses
+Vblank	rts		;Vertical Interrupt   so that i can jump to whatever i want
+inter0	bra	*-0	;$60 Interrupt #0 (Unused)
+inter1	bra	*-0	;$64 Interrupt #1
+extint	bra	*-0	;$68 Interrupt #2
+inter3	bra	*-0	;$6C Interrupt #3
+inter5	bra	*-0	;$74 Interrupt #5
+inter7	bra	*-0	;$7C Interrupt #7
+trap00	bra	*-0	;$80 TRAP #0 D 15 Instruction Vectors
+LoadCM	;Load into Colour Memory
 ;a0 = location of colours
 ;d0 = amount of colours - 1
 	movea.l	#vc,a1
@@ -223,8 +246,9 @@ LoadCM	;im gonna write a dma version of this maybe
 LoadCM1	move.l	(a0)+,(a1)
 	dbra	d0,LoadCM1
 	rts
-newObj	;a0 = address of object subroutine
+newObj	;>input a0 = address of object subroutine
 	;destroys d0 d1 a1 a2
+	;<output a1 = start of variables (for object init)
 	;wont work for objects with 0 variables (which at that point what does the object even do)
 	;you can just have a 1 byte dummy variable as a workaround for now but it aint mem efficient
 	moveq	#0,d0

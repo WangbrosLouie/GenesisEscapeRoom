@@ -1,28 +1,40 @@
-ReadIn	move.b	#$00,c1
+ReadIn6	move.b	#$00,c1		;for needless 6 button "support"
+	move.l	(sp),(sp)	;double nop apparently
 	move.b	c1,d7
-	rol.w	#8,d7
 	move.b	#$40,c1
+	rol.w	#8,d7		;equal in cycles apparently
 	move.b	c1,d7
+	move.l	(sp),(sp)
+	move.b	#$00,c1
+	move.l	(sp),(sp)
+	move.b	#$40,c1
+	move.l	(sp),(sp)
+	move.b	#$00,c1
+	move.l	(sp),(sp)
+	move.b	#$40,c1
+	;do some 6 button stuff here i think
 	swap	d7
 	move.b	#$00,c2
 	move.b	c2,d7
-	rol.w	#8,d7
 	move.b	#$40,c2
+	rol.w	#8,d7
 	move.b	c2,d7
 	rts
-P1Ctrl	move.b	#$00,c1
-	nop
-	nop
-	move.b	c1,d7
-	move.b	#$40,c1
-	rol.w	#8,d7
-	move.b	c1,d7
+P1Ctrl	move.b	#$0,cc1		;only gonna be usin this one anyway methinks
+	move.w	$FF000A,$FF0010
+	move.b	c1,d1
+	move.b	#$40,cc1
+	rol.w	#8,d1
+	move.b	c1,d1
+	move.w	d1,$FF000A
 	rts
-P2Ctrl	move.b	#$00,c2
+P2Ctrl	move.b	#$0,cc2
+	move.l	(sp),(sp)
 	move.b	c2,d7
 	rol.w	#8,d7
-	move.b	#$40,c1
+	move.b	#$40,cc2
 	move.b	c2,d7
+	move.w	d1,$FF000C
 	rts
 WaitForVee
 	move.w	vc,d0
@@ -121,3 +133,14 @@ new_Obj2
 	move.w	d1,(a1)+
 	move.w	(-10,a0),(a1)+
 	rts
+NoCheat	moveq	#0,d1		;NoCheat anti cheating thingy
+	move.l	#$3FFF,d0	;like im ever gonna use it tho
+	move.l	#$FF0000,a0
+NoChea1	move.l	(a0),d2
+	move.l	d1,(a0)
+	tst.l	(a0)
+	bne	Cheater		;pumpkin eater detected
+	move.l	d2,(a0)+	;whole thing takes 1114092 cycles
+	dbra	d0,NoChea1	;or around 1/7 of a second
+	rts			;so only call when acceptable
+Cheater	illegal			;cheaters get game crashes
