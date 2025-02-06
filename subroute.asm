@@ -135,8 +135,8 @@ new_Obj2
 	rts
 NoCheat	moveq	#0,d1		;NoCheat anti cheating thingy
 	move.l	#$3FFF,d0	;like im ever gonna use it tho
-	move.l	#$FF0000,a0
-NoChea1	move.l	(a0),d2
+	move.l	#$FF0000,a0	;to patch this simply use a cheat
+NoChea1	move.l	(a0),d2		;device to turn the moveq to rts
 	move.l	d1,(a0)
 	tst.l	(a0)
 	bne	Cheater		;pumpkin eater detected

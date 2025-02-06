@@ -6,7 +6,7 @@ the mouse pointer is an object in memory.
 the memory is gonna have a bunch of stuff in it.
 everything in the memory has a header.
 $FF0008 contains the first header's memory address.
-the header has the magic string "MEOW" in it(4 bytes),
+the header has the magic string 'MEOW' in it(4 bytes),
 the pointer to what code to execute(4 bytes),
 the next header's memory address(2 bytes),
 the length of the object in memory - 1(2 bytes),
@@ -35,7 +35,7 @@ $0016 mouse x
 $0018 mouse Y
 $001A screen scroll x (tiles)
 $001B screen scroll y (tiles)
-$0018
+$001C
  ...
 $0080 objects
  ...
