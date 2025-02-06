@@ -1,3 +1,4 @@
+	org	0
 vector:	dc.l $FFFFFE ;$00 SP Initial Value
 	dc.l pstart ;$04 PC Initial Value
 	dc.l afault ;$08 Access Fault
@@ -98,6 +99,9 @@ scw = $C000 ;Window
 sch = $C800 ;H Scroll
 sat = $CC00 ;Sprite Attrib. Table
 
+hdl = 16 ;obj header length
+
+
 ;quick note for me so that my code aint as unreadable as my java
 ;for labels (like pstart and VDP which is quite terribly named) i gotta keep them under 8 characters.
 ;that means max of 7 characters per label. and no blank labels cause thats just nonsensical.
@@ -109,6 +113,7 @@ sat = $CC00 ;Sprite Attrib. Table
 ;and thats all i think
 ;my code is gonna look so old fashioned and retro
 
+;actual code starts here by the way
 pstart	cmpi.l	#'MRAU',$FF0004	;check if soft or hard reset
 	beq	VDP			;if it is then skip init
 	move.b	$A10001,d0		;do the tmss thing
@@ -155,7 +160,7 @@ InitG	lea	mousepointer,a0	;initialize game
 mewo	moveq	#0,d0		;make some objects
 	move.l	#'MEOW',(a0)+	;this mewo aint a reference to mysticat btw
 	move.l	#testobj,(a0)+	;its only a typo
-	move.w	d0,(a0)+
+	move.w	d0,(a0)+	
 	move.l	#$F00,(a0)+
 	move.l	d0,(a0)+
 	dbra	d1,mewo
@@ -171,41 +176,60 @@ lookobj	movea.l	a5,a6		;move current object to last object
 	move.l	d0,a5
 	cmp.l	#'MEOW',(a5)	;is it an object?
 	bne	doneobj		;extremely rudimentary error handler/end of loop
-	movea.l	(4,a5),a0
+	move.l	(4,a5),a0
 	jsr	(a0)		;do the object subroutine
 	bra	lookobj
 doneobj	bsr	DoneWithVee		;done with processing the objects
+	bsr	drawing
 	bra	looop
+	dc.w	$FFFF
 	dc.w	%0000000000000000	;object stuff pay it no mind
 	dc.w	$1
-testobj	add.w	#14,a5		;seizure inducing background flash goooo-
+testobj	add.w	hdl+2,a5		;seizure inducing background flash goooo-
 	move.w	#$8700,d0
 	move.b	(a5),d0
 	add.b	#1,d0
 	move.b	d0,(a5)
 	move.l	#vc,a0
 	move.w	d0,(a0)
-	sub.w	#14,a5
+	sub.w	#hdl+2,a5
 	rts
+	dc.w	$1	;this is the mouse's id
 	dc.w	%0000000000000000
 	dc.w	$1	;curse that minimum variable size
-mouse	move.l	#$FF0016,a0
-	move.w	(-12,a0),d0
+mouse	move.l	#$FF0016,a0	;mouse x stuff
+	move.w	(-12,a0),d0	;move the controller input into d0
+	btst	#$2,d0		;more testing than schools
+	bne	*+4		;or maybe not
+	sub.w	#1,(a0)
+	btst	#$3,d0
+	bne	*+4
+	add.w	#1,(a0)
+	tst.w	(a0)		;check if mouse x went to negative
+	bpl	*+6
+	clr.w	(a0)		;set it back to 0
+	bra	*+12
+	cmp.w	#$100,(a0)	;check if the mouse is too far right
+	blt	*+6
+	move.w	#$FF,(a0)	;set it to the max x coord
+	add.w	#2,a0		;mouse y stuff
 	btst	#$0,d0
 	bne	*+4
 	sub.w	#1,(a0)
 	btst	#$1,d0
 	bne	*+4
 	add.w	#1,(a0)
-	btst	#$2,d0
-	bne	*+6
-	sub.w	#1,(+2,a0)
-	btst	#$3,d0
-	bne	*+6
-	add.w	#1,(+2,a0)
-	;calculate window stuff
+	tst.w	(a0)		;check is mouse y went to negative
+	bpl	*+6
+	clr.w	(a0)		;set it back to 0
+	bra	*+12
+	cmp.w	#$D0,(a0)	;check if the mouse is too far down
+	blt	*+6
+	move.w	#$CF,(a0)
 	;draw somethin now ya doofus
+	;make the draw function put mouse on top priority
 	rts
+	dc.w	$2	;this is the button's id
 	dc.w	%0000000000000000
 	dc.w	$4
 button	;button processing here	
@@ -254,14 +278,14 @@ newObj	;>input a0 = address of object subroutine
 	;wont work for objects with 0 variables (which at that point what does the object even do)
 	;you can just have a 1 byte dummy variable as a workaround for now but it aint mem efficient
 	moveq	#0,d0
-	move.w	(-2,a0),d0
-	movea.l	#$FF007E,a1
-newObj1	move.l	d0,d1
+	move.w	(-2,a0),d0	;object size
+	movea.l	#$FF0080,a1	;first memory thingy
+newObj1	move.l	d0,d1		;make the iterator thing
 	addq.w	#1,d1
 	divu.w	#2,d1
 	bclr.l	#16,d1
-	addq.w	#7,d1
-	addq.w	#2,a1
+	addq.w	#7,d1		;until here
+	;addq.w	#2,a1
 newObj2	cmp.l	#'MEOW',(a1)	;check for existance of an object
 	beq	newObj1
 	move.w	#0,(a1)+		;cause if the memory might be used later why not clear it now
@@ -272,7 +296,7 @@ newObj2	cmp.l	#'MEOW',(a1)	;check for existance of an object
 newObj3	tst.w	(8,a2)			;go look for the last object in the daisy chain
 	bne newObj3
 newObj4	sub.w	d0,a1			;move the register to start of vars
-	sub.w	#$14,a1			;move the register to start of object
+	sub.w	#$10,a1			;move the register to start of object
 	exg	d0,a1
 	bclr	#0,d0
 	exg	d0,a1
@@ -283,35 +307,90 @@ newObj4	sub.w	d0,a1			;move the register to start of vars
 	subq.w	#1,d0
 	move.w	d0,(a1)+
 	move.w	(-4,a0),(a1)+
+	move.w	(-6,a0),(a1)+
 	rts	;i retract my previous statement about not getting insomnia coding this
+drawing	move.l	#$FF0000,a5
+	moveq	#0,d0
+drawin1	move.l	sp,a0
+	movea.l	a5,a6		;move current object to last object
+	move.l	a5,d3		;because the stupid address is sign extended on a registers
+	move.w	(8,a6),d2	;get new object
+	move.l	d2,a5
+	cmp.l	#'MEOW',(a5)	;is it an object?
+	bne	drawin3		;extremely rudimentary error handler/end of loop
+	moveq	#0,d2
+	move.w	(14,a5),d2
+	add.w	#$40,d2
+	rol.l	#5,d2
+	move.l	d2,a1
+	sub.w	#$20,a0
+	move.l	(a1)+,(a0)+
+	move.l	(a1)+,(a0)+
+	add.l	#8,d0
+	cmp.w	#1,(14,a5)
+	bne	drawin2
+	move.w	$FF0016,(-2,a0)
+	move.w	$FF0018,(-14,a0)
+drawin2	bra	drawin1
+drawin3	sub.w	#8,a0
+	move.l	#$CC00,d1
+	bsr	DMA2VM
+	rts
 VDPStuff:
+	;for 1 ? bit, ?=1 is first, and ?=0 is second if present
+	;for 2 or more ? bits, it goes 0 to max value
 	dc.b	%00000100;0 Mode 1
+			;000? Enable H Int. (Reg. 10)
+			;01?0 Disable HV Counter
 	dc.b	%01000100;1 Mode 2
+			;0? Enable Display
+			;? Enable V Int.
+			;? DMA Enable
+			;?100 30/28 Cell V Res.
 	dc.b	%00100000;2 Scroll A
+			;00???000 MSBs of 16bit addr.
 	dc.b	%00110000;3 Window
+			;00?????0 MSBs of 16bit addr.
 	dc.b	%00000101;4 Scroll B
+			;00000??? MSBs of 16bit addr.
 	dc.b	%01100110;5 Sprite Attrib.
+			;0??????? MSBs of 16bit addr.
+			;LSB is 0 in 40 Cell H Res.
 	dc.b	%00000000;6 Unused
 	dc.b	%00000000;7 BG Colo(u)r
+			;00?? Palette Number
+			;???? Colo(u)r Number
 	dc.b	%00000000;8 Unused
 	dc.b	%00000000;9 Unused
 	dc.b	%00000000;10 Horizontal Interrupt Timer
 	dc.b	%00000000;11 Mode 3
+			;0000? Enable Ext. Int.
+			;? 2 Cell/All V Scroll
+			;?? All/X/Cell/Line H Scroll
 	dc.b	%00000000;12 Mode 4
+			;? 40/32 Cell H Res.(bit 0)
+			;000? Shadow/Highlight
+			;?? No/X/Yes/2xRes. Interlace
+			;? 40/32 Cell H Res.(bit 7)
 	dc.b	%00110010;13 H Scroll
 	dc.b	%00000000;14 Unused
 	dc.b	%00000010;15 Auto Increase VRAM Address
-	dc.b	%00000000;16 Scroll Size
+	dc.b	%00010000;16 Scroll Size
+			;00?? 32/64/X/128 V Scroll Size
+			;00?? 32/64/X/128 H Scroll Size
 	dc.b	%00000000;17 Window H Position
 	dc.b	%00000000;18 Window V Position
-	dc.b	%00000000;19 
-	dc.b	%00000000;20
-	dc.b	%00000000;21
-	dc.b	%00000000;22
-	dc.b	%00000000;23
+	dc.b	%00000000;19 DMA Length Counter Low
+	dc.b	%00000000;20 DMA Length Counter High
+	dc.b	%00000000;21 DMA Source Counter Low
+	dc.b	%00000000;22 DMA Source Counter Mid
+	dc.b	%00000000;23 DMA Source Counter High
 	include "subroute.asm";good ol recycled file from the stupid genesis tophat turmoil
+	org	$800
+	include "sprites.asm"
 	include "palettes.asm"
 	include "mouseTiles.asm"
+	include "bgTiles.asm"
 	
 ;Controller Guide;yet again from the stupid seghat genmoil
 ;0011 0011 0111 1111

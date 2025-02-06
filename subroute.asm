@@ -79,9 +79,9 @@ DMA2VM ;Registers: a0: Source d0: Length d1: Destination Note: Call in vblank on
 	bset	#7,d1
 	move.l	d1,(a0) ;move dest. address to ram to avoid dma bug
 	move.l	(a0),(a6) ;write address; dma starts here
-;	move.w	vc,d0
-;	andi.b	#2,d0
-;	bne	*-$7
+	move.w	vc,d0
+	andi.b	#2,d0
+	bne	*-$7
 	move.w	#$8104,(a6) ;set dma "disenable"
 	rts
 DMAFILL ;Registers: d0: Source d1: Destination d2: Length in bytes

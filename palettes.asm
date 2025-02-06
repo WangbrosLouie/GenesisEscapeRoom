@@ -32,3 +32,20 @@ palette2
 	dc.w $0000
 	dc.w $0000
 	dc.w $0000
+palette3
+	dc.w $0EEE
+	dc.w $0000
+	dc.w $04CE
+	dc.w $0000
+	dc.w $0000
+	dc.w $0000
+	dc.w $0000
+	dc.w $0000
+	dc.w $0000
+	dc.w $0000
+	dc.w $0000
+	dc.w $0000
+	dc.w $0000
+	dc.w $0000
+	dc.w $0000
+	dc.w $0000

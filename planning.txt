@@ -11,8 +11,9 @@ the pointer to what code to execute(4 bytes),
 the next header's memory address(2 bytes),
 the length of the object in memory - 1(2 bytes),
 16 flags (2 bytes)(byte1=general,byte2=variables),
+object type (2 bytes) (for drawing),
 as well as the variables(variable length).
-in total the header is 14 bytes + variables.
+in total the header is 16 bytes + variables.
 when a new thing gets added it looks for a header starting at the first header pointer.
 if it doesnt find one in the range of memory that it needs then it takes that memory.
 if it does it goes forward the amount of bytes the object takes and looks again.
