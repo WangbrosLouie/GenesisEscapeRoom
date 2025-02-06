@@ -152,9 +152,14 @@ InitVM	move.l	#$FF0000,d0
 	suba.w	a0,a0
 	move.w	#$0EC2,(a0)
 	move.l	#'MRAU',$FF0004	;its meowin finished initializing
-InitG	lea	mousepointer,a0	;initialize game
+InitG	lea	palette1,a0	;initialize game
 	moveq	#15,d0
 	bsr	LoadCM
+	lea	mousepointer,a0
+	move.l	#24*8,d0
+	moveq	#0,d1
+	move.w	#$8F02,vc
+	bra	DMA2VM
 	moveq	#1,d1		;initialize of the object of the mouse
 	bra	mewo_v2
 mewo	moveq	#0,d0		;make some objects
@@ -310,31 +315,31 @@ newObj4	sub.w	d0,a1			;move the register to start of vars
 	move.w	(-6,a0),(a1)+
 	rts	;i retract my previous statement about not getting insomnia coding this
 drawing	move.l	#$FF0000,a5
-	moveq	#0,d0
-drawin1	move.l	sp,a0
+	moveq	#0,d0		;d0 is the dma length
+drawin1	move.l	sp,a2		;back up the sp
 	movea.l	a5,a6		;move current object to last object
 	move.l	a5,d3		;because the stupid address is sign extended on a registers
-	move.w	(8,a6),d2	;get new object
+	move.w	(8,a6),d2		;get new object
 	move.l	d2,a5
 	cmp.l	#'MEOW',(a5)	;is it an object?
 	bne	drawin3		;extremely rudimentary error handler/end of loop
-	moveq	#0,d2
+	moveq	#0,d2		;get the object id
 	move.w	(14,a5),d2
-	add.w	#$40,d2
+	move.w	#$40,d2		;find the sprite struct
 	rol.l	#5,d2
 	move.l	d2,a1
-	sub.w	#$20,a0
-	move.l	(a1)+,(a0)+
-	move.l	(a1)+,(a0)+
-	add.l	#8,d0
+	move.l	-(a1),-(sp)	;load the sprite
+	move.l	-(a1),-(sp)
+	add.l	#4,d0
 	cmp.w	#1,(14,a5)
 	bne	drawin2
-	move.w	$FF0016,(-2,a0)
-	move.w	$FF0018,(-14,a0)
+	move.w	$FF0016,(2,sp)
+	move.w	$FF0018,(14,sp)
 drawin2	bra	drawin1
-drawin3	sub.w	#8,a0
-	move.l	#$CC00,d1
+drawin3	move.l	#$CC00,d1
+	move.l	sp,a0
 	bsr	DMA2VM
+	move.l	a2,sp
 	rts
 VDPStuff:
 	;for 1 ? bit, ?=1 is first, and ?=0 is second if present
@@ -375,7 +380,7 @@ VDPStuff:
 	dc.b	%00110010;13 H Scroll
 	dc.b	%00000000;14 Unused
 	dc.b	%00000010;15 Auto Increase VRAM Address
-	dc.b	%00010000;16 Scroll Size
+	dc.b	%00000000;16 Scroll Size
 			;00?? 32/64/X/128 V Scroll Size
 			;00?? 32/64/X/128 H Scroll Size
 	dc.b	%00000000;17 Window H Position
