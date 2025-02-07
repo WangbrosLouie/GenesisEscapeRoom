@@ -21,9 +21,11 @@ ReadIn6	move.b	#$00,c1		;for needless 6 button "support"
 	move.b	c2,d7
 	rts
 P1Ctrl	move.b	#$0,cc1		;only gonna be usin this one anyway methinks
+	move.b	#$0,c1
 	move.w	$FF000A,$FF0010
 	move.b	c1,d1
 	move.b	#$40,cc1
+	move.b	#$40,c1
 	rol.w	#8,d1
 	move.b	c1,d1
 	move.w	d1,$FF000A
