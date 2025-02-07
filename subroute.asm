@@ -48,7 +48,7 @@ DoneWithVee
 	rts
 DMA2VM ;Registers: a0: Source d0: Length d1: Destination Note: Call in vblank only as dma is not fast enough for hblank
 	move.l	#vc,a6 ;move vdp control address
-	move.w	#$8114,(a6) ;enable dma
+	move.w	#$8154,(a6) ;enable dma
 	move.w	#$8F02,(a6) ;bias = 2
 	move.w	#$9300,d2 ;prep for register write
 	move.b	d0,d2 ;register data
@@ -78,11 +78,12 @@ DMA2VM ;Registers: a0: Source d0: Length d1: Destination Note: Call in vblank on
 	swap	d1
 	bset	#7,d1
 	move.l	d1,(a0) ;move dest. address to ram to avoid dma bug
-	move.l	(a0),(a6) ;write address; dma starts here
+	move.w	(a0)+,(a6) ;write address
+	move.w	(a0)+,(a6) ;dma starts here
 	move.w	vc,d0
 	andi.b	#2,d0
 	bne	*-$7
-	move.w	#$8104,(a6) ;set dma "disenable"
+	move.w	#$8144,(a6) ;set dma "disenable"
 	rts
 DMAFILL ;Registers: d0: Source d1: Destination d2: Length in bytes
 	movea.l	#vc,a0

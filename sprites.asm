@@ -1,5 +1,5 @@
-s_cursr	dc.l $0000
-	dc.w $05
-	dc.w $00
-	dc.l $8000
-	dc.l $0000
+s_cursr	dc.w $0000
+	dc.b $05
+	dc.b $00
+	dc.w $A001
+	dc.w $0000

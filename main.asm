@@ -85,14 +85,14 @@ cc1 = $A10009
 cc2 = $A1000B
 zbr = $A11100 ;z80 bus req
 zr = $A11200 ;z80 reset
-vc = $C00004
-vd = $C00000
-vrw = $40000000
-crw = $C0000000
-vsw = $40000010
-vrr = $0
-crr = $20
-vsr = $10
+vc = $C00004 ;vdp control
+vd = $C00000 ;vdp data
+vrw = $40000000 ;vram write
+crw = $C0000000 ;cram write
+vsw = $40000010 ;vsram write
+vrr = $0 ;vram read
+crr = $20 ;cram read
+vsr = $10 ;vsram read
 sca = $8000 ;Scroll A
 scb = $A000 ;Scroll B
 scw = $C000 ;Window
@@ -100,7 +100,6 @@ sch = $C800 ;H Scroll
 sat = $CC00 ;Sprite Attrib. Table
 
 hdl = 16 ;obj header length
-
 
 ;quick note for me so that my code aint as unreadable as my java
 ;for labels (like pstart and VDP which is quite terribly named) i gotta keep them under 8 characters.
@@ -153,13 +152,13 @@ InitVM	move.l	#$FF0000,d0
 	move.w	#$0EC2,(a0)
 	move.l	#'MRAU',$FF0004	;its meowin finished initializing
 InitG	lea	palette1,a0	;initialize game
-	moveq	#15,d0
+	moveq	#31,d0
 	bsr	LoadCM
 	lea	mousepointer,a0
 	move.l	#24*8,d0
-	moveq	#0,d1
+	moveq	#$20,d1
 	move.w	#$8F02,vc
-	bra	DMA2VM
+	bsr	DMA2VM
 	moveq	#1,d1		;initialize of the object of the mouse
 	bra	mewo_v2
 mewo	moveq	#0,d0		;make some objects
@@ -270,11 +269,14 @@ LoadCM	;Load into Colour Memory
 ;a0 = location of colours
 ;d0 = amount of colours - 1
 	movea.l	#vc,a1
-	move.l	#$8F02,(a1)
-	move.l	vrw,(a1)
-	suba.w	a0,a0
-	moveq	#15,d0
-LoadCM1	move.l	(a0)+,(a1)
+	move.w	#$8F02,(a1)
+	move.l	#crw,(a1)
+	suba.w	a1,a1
+	;moveq	#15,d0
+LoadCM1	move.w	(4,a1),d1
+	and.w	#$0200,d1
+	beq	LoadCM1
+	move.l	(a0)+,(a1)
 	dbra	d0,LoadCM1
 	rts
 newObj	;>input a0 = address of object subroutine
@@ -316,30 +318,30 @@ newObj4	sub.w	d0,a1			;move the register to start of vars
 	rts	;i retract my previous statement about not getting insomnia coding this
 drawing	move.l	#$FF0000,a5
 	moveq	#0,d0		;d0 is the dma length
-drawin1	move.l	sp,a2		;back up the sp
-	movea.l	a5,a6		;move current object to last object
-	move.l	a5,d3		;because the stupid address is sign extended on a registers
+	move.l	sp,d7		;back up the sp
+drawin1	movea.l	a5,a6		;move current object to last object
+	move.l	a5,d2		;because the stupid address is sign extended on a registers
 	move.w	(8,a6),d2		;get new object
 	move.l	d2,a5
 	cmp.l	#'MEOW',(a5)	;is it an object?
 	bne	drawin3		;extremely rudimentary error handler/end of loop
 	moveq	#0,d2		;get the object id
 	move.w	(14,a5),d2
-	move.w	#$40,d2		;find the sprite struct
-	rol.l	#5,d2
+	add.w	#$100,d2		;find the sprite struct
+	rol.l	#3,d2
 	move.l	d2,a1
 	move.l	-(a1),-(sp)	;load the sprite
 	move.l	-(a1),-(sp)
 	add.l	#4,d0
 	cmp.w	#1,(14,a5)
 	bne	drawin2
-	move.w	$FF0016,(2,sp)
-	move.w	$FF0018,(14,sp)
+	move.w	$FF0016,(6,sp)
+	move.w	$FF0018,(sp)
 drawin2	bra	drawin1
 drawin3	move.l	#$CC00,d1
 	move.l	sp,a0
 	bsr	DMA2VM
-	move.l	a2,sp
+	move.l	d7,sp
 	rts
 VDPStuff:
 	;for 1 ? bit, ?=1 is first, and ?=0 is second if present
