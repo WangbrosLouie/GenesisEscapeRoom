@@ -227,9 +227,9 @@ mouse	move.l	#$FF0016,a0	;mouse x stuff
 	bpl	*+6
 	clr.w	(a0)		;set it back to 0
 	bra	*+12
-	cmp.w	#$D0,(a0)	;check if the mouse is too far down
+	cmp.w	#$E0,(a0)	;check if the mouse is too far down
 	blt	*+6
-	move.w	#$CF,(a0)
+	move.w	#$DF,(a0)
 	;draw somethin now ya doofus
 	;make the draw function put mouse on top priority
 	rts
@@ -336,7 +336,9 @@ drawin1	movea.l	a5,a6		;move current object to last object
 	cmp.w	#1,(14,a5)
 	bne	drawin2
 	move.w	$FF0016,(6,sp)
+	add.w	#$80,(6,sp)
 	move.w	$FF0018,(sp)
+	add.w	#$80,(sp)
 drawin2	bra	drawin1
 drawin3	move.l	#$CC00,d1
 	move.l	sp,a0
