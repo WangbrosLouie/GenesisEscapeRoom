@@ -201,37 +201,64 @@ testobj	add.w	hdl+2,a5		;seizure inducing background flash goooo-
 	dc.w	$1	;this is the mouse's id
 	dc.w	%0000000000000000
 	dc.w	$1	;curse that minimum variable size
-mouse	move.l	#$FF0016,a0	;mouse x stuff
-	move.w	(-12,a0),d0	;move the controller input into d0
-	btst	#$2,d0		;more testing than schools
-	bne	*+4		;or maybe not
-	sub.w	#1,(a0)
-	btst	#$3,d0
-	bne	*+4
-	add.w	#1,(a0)
-	tst.w	(a0)		;check if mouse x went to negative
-	bpl	*+6
-	clr.w	(a0)		;set it back to 0
-	bra	*+12
-	cmp.w	#$100,(a0)	;check if the mouse is too far right
-	blt	*+6
-	move.w	#$FF,(a0)	;set it to the max x coord
-	add.w	#2,a0		;mouse y stuff
-	btst	#$0,d0
-	bne	*+4
-	sub.w	#1,(a0)
+mouse	add.w	#$10,a5
+	move.l	$FF0016,d1	;mouse x stuff
+	move.w	$FF000A,d0	;move the controller input into d0
+	not.l	d0
+	and.w	#$F,d0
+	bne	*+6
+	clr.b	(a5)
+	bra	mouse2
+	cmp.b	#$FF,(a5)
+	bcs	*+6
+	moveq	#$5,d2
+	bra	mouse1
+	add.b	#$1,(a5)
+	cmp.b	#$BF,(a5)
+	bcs	*+6
+	moveq	#$4,d2
+	bra	mouse1
+	cmp.b	#$7F,(a5)
+	bcs	*+6
+	moveq	#$3,d2
+	bra	mouse1
+	cmp.b	#$3F,(a5)
+	bcs	*+6
+	moveq	#$2,d2
+	bra	mouse1
+	moveq	#$1,d2
+mouse1	btst	#$0,d0		;more testing than schools
+	beq	*+4		;or maybe not
+	sub.w	d2,d1
 	btst	#$1,d0
-	bne	*+4
-	add.w	#1,(a0)
-	tst.w	(a0)		;check is mouse y went to negative
+	beq	*+4
+	add.w	d2,d1
+	tst.w	d1		;check if mouse x went to negative
 	bpl	*+6
-	clr.w	(a0)		;set it back to 0
+	sub.w	d1,d1		;set it back to 0
 	bra	*+12
-	cmp.w	#$E0,(a0)	;check if the mouse is too far down
+	cmp.w	#$E0,d1	;check if the mouse is too far right
 	blt	*+6
-	move.w	#$DF,(a0)
+	move.w	#$DF,d1		;set it to the max x coord
+	swap	d1		;mouse y stuff
+	btst	#$2,d0
+	beq	*+4
+	sub.w	d2,d1
+	btst	#$3,d0
+	beq	*+4
+	add.w	d2,d1
+	tst.w	d1		;check is mouse y went to negative
+	bpl	*+6
+	sub.w	d1,d1		;set it back to 0
+	bra	*+12
+	cmp.w	#$100,d1	;check if the mouse is too far down
+	blt	*+6
+	move.w	#$FF,d1
+	swap	d1
+mouse2	move.l	d1,$FF0016
 	;draw somethin now ya doofus
 	;make the draw function put mouse on top priority
+	sub.w	#$10,a5
 	rts
 	dc.w	$2	;this is the button's id
 	dc.w	%0000000000000000

@@ -63,7 +63,7 @@ objects further in memory will be drawn on top of the previous hitbox,
 so im going to try and avoid having overlapping clickable objects.
 the objects will also be drawn on the screen using the 1 function pointed to by the object.
 --colour changing button
-contrary to the name it changes the background colour.
+contrary to the name it changes the background colour, not its own.
 the variable is one byte which is which colour in the palette to swap to.
 the code checks if the a button is pushed, then if not debounced, then if the pointer is in range.
 if all checks pass then the colour changes and the debounce is set.
