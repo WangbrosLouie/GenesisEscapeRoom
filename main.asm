@@ -263,16 +263,25 @@ mouse2	move.l	d1,$FF0016
 	dc.w	$2	;this is the button's id
 	dc.w	%0000000000000000
 	dc.w	$4
-btn11	move.l	$FF0016,d0	;button processing here	
-	add.w	#$12,a5		;skip past the header
+btn11	;check for the a button up to undebounce
+	move.l	$FF0016,d0	;button processing here	
+	add.w	#$D,a5		;skip to the flags
+	btst	#$0,(a5)
+	bne	btn11e
+	add.w	#$5		;skip to the position
+	bne	btn11e		;debounced
 	cmp.w	(a5),d0		;is the mouse low enough
-	blo	*+6
+	blo	btn11e
 	add.w	#8,d0
 	cmp.w	(a5),d0		;is the mouse high enough
-	bhi	*+6
+	bhi	btn11e
 	swap	d0
-	cmp.w	(2,a5),d0
-	sub.w	#$10,a5
+	cmp.w	(-2,a5),d0
+	blo	btn11e
+	add.w	#8,d0
+	cmp.w	(-2,a5),d0
+	bhi	btn11e
+btn11e	sub.w	#$12,a5
 	rts
 ;the variables are one byte which is which colour in the palette to swap to and a one bit debounce.
 ;the code checks if the a button is pushed, then if not debounced, then if the pointer is in range.
